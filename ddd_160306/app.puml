@@ -1,0 +1,130 @@
+@startuml
+
+
+namespace App #fcc {
+	namespace DataTransformer {
+		namespace User {
+			interface UserDataTransfomer {
+				+ write(user:User)
+				+ read() :array
+			}
+			class UserDtoDataTransfomer
+			UserDataTransfomer <|.. UserDtoDataTransfomer
+		}
+	}
+
+  namespace Service {
+  	namespace User {
+			namespace App.Service.User.AggregateVersion {
+			  class ViewWishesService {
+			    - userRepository :UserRepository
+			    + execute(ViewWishesRequest) :Wish[]
+			  }
+			}
+
+			class LoginUserService {
+				- authenticationService :Authentifier
+				+ __construct(Authentifier)
+				+ execute(email:string, password:string)
+			}
+
+			class LogoutUserService {
+				- authenticationService :Authentifier
+				+ __construct(Authentifier)
+				+ execute()
+			}
+
+			class GrantUserWishesService {
+				- userRepository :UserRepository
+				+ __construct(UserRepository)
+				+ execute(userId :int) :int
+			}
+
+			class SignUpUserRequest {
+				- email :string
+				- password :string
+				+ __construct(email:string, password:string)
+				+ email() :string
+				+ password() :string
+			}
+
+			class SignUpUserService {
+				- userRepository :UserRepository
+				- userDataTransformer :UserDataTransfomer
+				+ __construct(UserRepository, UserDataTransfomer)
+				+ execute(request=null) :array
+			}
+			Ddd.Application.Service.ApplicationService <|.. SignUpUserService
+			SignUpUserService -- SignUpUserRequest
+
+			class ViewWishesService {
+				- wishRepository :WishRepository
+				+ __construct(WishRepository)
+				+ execute(request=null) :Wish[]
+			}
+			class ViewWishesRequest {
+				- userId :UserId
+				+ __construct(UserId)
+				+ userId() :UserId
+			}
+			ViewWishesService -- ViewWishesRequest
+			App.Service.User.AggregateVersion.ViewWishesService -- ViewWishesRequest
+
+			class ViewBadgesService {
+				- userService :UserSecurityToken
+				+ __construct(UserService)
+				+ execute(request=null) :FirstWillMadeBadge[]
+			}
+			class ViewBagesRequest {
+				- userId :UserId
+				+ __construct(UserId)
+				+ userId() :UserId
+			}
+			ViewBadgesService -- ViewBagesRequest
+		}
+
+		namespace Wish {
+		  namespace AggregateVersion {
+		    class AddWishService
+		    class DeleteWishService
+		    class UpdateWishService
+		    class ViewWishService
+		    abstract class WishService
+		    Ddd.Application.Service.ApplicationService <|.. WishService
+		    WishService <|-- ViewWishService
+        WishService <|-- AddWishService
+        WishService <|-- UpdateWishService
+        WishService <|-- DeleteWishService
+
+        ViewWishService -- App.Service.Wish.ViewWishRequest
+        AddWishService -- App.Service.Wish.AddWishRequest
+        UpdateWishService -- App.Service.Wish.UpdateWishRequest
+        DeleteWishService -- App.Service.Wish.DeleteWishRequest
+		  }
+
+		  class AddWishService
+		  class DeleteWishService
+		  class UpdateWishService
+		  class ViewWishService
+		  abstract class WishService
+		  Ddd.Application.Service.ApplicationService <|.. WishService
+		  WishService <|-- ViewWishService
+		  WishService <|-- AddWishService
+		  WishService <|-- UpdateWishService
+		  WishService <|-- DeleteWishService
+
+      class ViewWishRequest
+      ViewWishService -- ViewWishRequest
+		  class AddWishRequest
+		  AddWishService -- AddWishRequest
+		  class UpdateWishRequest
+		  UpdateWishService -- UpdateWishRequest
+		  class DeleteWishRequest
+		  DeleteWishService -- DeleteWishRequest
+  	}
+  	App.Service.User --[hidden]-- App.Service.Wish
+  }
+}
+
+
+@enduml

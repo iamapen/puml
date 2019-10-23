@@ -1,0 +1,141 @@
+@startuml
+
+namespace Ddd {
+  namespace Application {
+    interface EventStore {
+      + append(Ddd.Domain.DomainEvent) :mixed
+      + allStoredEventsSince(eventId) :Ddd.Domain.DomainEvent[]
+    }
+
+    namespace DataTransformer {
+      interface DataTransformer {
+        + write(object)
+        + read() :mixed
+      }
+    }
+    namespace Notification {
+      interface MessageProducer {
+        + open(exchangeName)
+        + send(exchangeName:string, notificationMsg:string, notificationTypeName:string, notificationId:int, occurredOn:DateTime)
+        + close(exchangeName)
+      }
+      interface PublishedMessageTracker {
+        + mostRecentPublishedMessageId(typeName) :int
+        + trackMostRecentPublishedMessage(typeName, notification)
+      }
+      class NotificationService {
+        - serializer :JMS\Serializer\Serializer
+        - eventStore :EventStore
+        - publishedMessageTracker :PublishedMessageTracker
+        - messageProducer :MessageProducer
+        + __construct(EventStore, PublishedMessageTracker, MessageProducer)
+        + publishNotifications(exchangeName:string) :int
+      }
+      NotificationService o-- MessageProducer
+      NotificationService o-- PublishedMessageTracker
+    }
+    namespace Service {
+      interface ApplicationService {
+        + execute(request =null)
+      }
+
+      class TransactionalApplicationService {
+        - session :TransactionalSession
+        - service :ApplicationService
+        + __construct(ApplicationService, TransactionalSession)
+        + execute(request=null)
+      }
+      ApplicationService <|.. TransactionalApplicationService
+
+      interface TransactionalSession {
+        + executeAtomically(operation :Callable)
+      }
+    }
+    Ddd.Application.Notification --[hidden] Ddd.Application.Service
+  }
+  namespace Domain {
+    interface DomainEvent #cfc {
+      + occurredOn() :DateTime
+    }
+    interface DomainEventSubscriber {
+      + handle(aDomainEvent)
+      + isSubscribedTo(aDomainEvent) :bool
+    }
+    class DomainEventPublisher {
+      - subscrivers :DomainEventSubscriber[]
+      - {static} instance :self
+      - id :int
+      + {static} instance() :self
+      + subscribe(DomainEventSubscriber)
+      + unsubscribe(id)
+      + publish(DomainEvent)
+    }
+    DomainEventPublisher o-- DomainEventSubscriber
+    class PersistDomainEventSubscriber
+    DomainEventSubscriber <|.. PersistDomainEventSubscriber
+    namespace Event {
+      interface PublishableDomainEvent
+      class PublishedMessage {
+        - mostRecentPublishedMessageId :int
+        - trackerId :int
+        - typeName :string
+      }
+      class StoredEvent {
+        - eventId :int
+        - eventBody :string
+        - occurredOn :DateTime
+        - typeName :string
+      }
+      Ddd.Domain.DomainEvent <|.. StoredEvent
+    }
+  }
+  namespace Infrastructure {
+    namespace Application {
+			namespace Notification {
+				abstract class RabbitMqMessaging {
+				  + __construct(AMQPConnection)
+				  + connect(exchangeName:string)
+				  + open(exchangeName:string)
+				  + channel(exchangeName:string) :AMQPChannel
+				  + close(exchangeName:string)
+				}
+				class RabbitMqMessageProducer
+				RabbitMqMessaging <|.. RabbitMqMessageProducer
+				Ddd.Application.Notification.MessageProducer <|.. RabbitMqMessageProducer
+
+				class DoctrineEventStore
+				Ddd.Application.EventStore <|.. DoctrineEventStore
+				Doctrine.ORM.EntityRepository <|-- DoctrineEventStore
+
+				class DoctrinePublishedMessageTracker
+				Doctrine.ORM.EntityRepository <|-- DoctrinePublishedMessageTracker
+				Ddd.Application.Notification.PublishedMessageTracker <|.. DoctrinePublishedMessageTracker
+			}
+		}
+    namespace Persistence {
+    	namespace Doctrine {
+    		namespace Config {
+    		}
+    	}
+    }
+    note top of Ddd.Infrastructure.Persistence.Doctrine.Config
+      doctrine設定のymlファイル群
+      - Ddd\Domain\Event\StoredEvent と Ddd\Infrastructure\Application\Notification\DoctrineEventStore のマップ
+      - Ddd\Domain\Event\PublishedMessage と Ddd\Infrastructure\Application\Notification\DoctrinePublishedMessageTracker のマップ
+
+    endnote
+    namespace Service {
+      class AdodbSession
+      Ddd.Application.Service.TransactionalSession <|.. AdodbSession
+      class DoctrineSession
+      Ddd.Application.Service.TransactionalSession <|.. DoctrineSession
+      class DummySession
+      Ddd.Application.Service.TransactionalSession <|.. DummySession
+    }
+  }
+  Ddd.Application --[hidden]-- Ddd.Domain
+  Ddd.Domain --[hidden]-- Ddd.Infrastructure
+}
+
+
+@enduml

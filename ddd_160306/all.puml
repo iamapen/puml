@@ -1,0 +1,16 @@
+@startuml
+title
+  Ddd
+endtitle
+
+!include ddd.puml
+!include app.puml
+!include domain.puml
+!include infrastructure.puml
+
+!include vendor.puml
+
+App --[hidden]-- Domain
+Domain --[hidden]-- Infrastructure
+
+@enduml

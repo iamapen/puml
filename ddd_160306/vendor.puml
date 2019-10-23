@@ -1,0 +1,21 @@
+@startuml
+
+namespace Doctrine {
+  namespace ORM {
+    class EntityRepository
+    class EntityManager
+  }
+  namespace DBAL.Types {
+    class GuidType
+  }
+}
+
+namespace Symfony.Component.Console {
+  class Application
+  namespace Command {
+    class Command
+  }
+}
+
+
+@enduml

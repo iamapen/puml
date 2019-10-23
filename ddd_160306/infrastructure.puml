@@ -1,0 +1,134 @@
+@startuml
+
+namespace Infrastructure #fcf {
+  namespace Domain {
+    class SessionAuthentifier {
+      - session :Session
+      + __construct(UserRepository, Session)
+    }
+    Domain.Model.Authentifier <|.. SessionAuthentifier
+    namespace Model {
+      class DoctrineEntityId
+      Doctrine.DBAL.Types.GuidType <|-- DoctrineEntityId
+
+      namespace User {
+        class FirstWillMadeBadge
+        Domain.Model.User.FirstWillMadeBadge <|-- FirstWillMadeBadge
+
+        class DoctrineUserId
+        Infrastructure.Domain.Model.DoctrineEntityId <|-- DoctrineUserId
+
+        class DoctrineUserRepository
+        Domain.Model.User.UserRepository <|.. DoctrineUserRepository
+        Doctrine.ORM.EntityRepository <|-- DoctrineUserRepository
+      }
+      namespace Wish {
+        class DoctrineWishId
+        Infrastructure.Domain.Model.DoctrineEntityId <|-- DoctrineWishId
+
+        class DoctrineWishRepository
+        Domain.Model.Wish.WishRepository <|.. DoctrineWishRepository
+        Doctrine.ORM.EntityRepository <|-- DoctrineWishRepository
+
+        class WishEmail {
+          - mailer :Swift_Mailer
+          - email :string
+          + __construct(WishId, UserId, email:string, content:string)
+          + grant()
+          + email() :string
+          + changeEmail(email:string) :self
+        }
+        Domain.Model.Wish.Wish <|-- WishEmail
+      }
+    }
+  }
+  namespace Persistence {
+    namespace Doctrine {
+      namespace Mapping {
+      }
+      note top of Infrastructure.Persistence.Doctrine.Mapping
+        doctrineの設定ymlファイル群
+      endnote
+      class EntityManagerFactory {
+        + build(connection) :Doctrine.ORM.EntityManager
+      }
+    }
+    namespace InMemory {
+      namespace User {
+        class InMemoryUserRepository
+        Domain.Model.User.UserRepository <|.. InMemoryUserRepository
+      }
+      namespace Wish {
+        class InMemoryWIshRepository
+        Domain.Model.Wish.WishRepository <|.. InMemoryWIshRepository
+      }
+    }
+    namespace Test.Domain.Model.User {
+      class EmptyUserRepository
+      Domain.Model.User.UserRepository <|.. EmptyUserRepository
+      class NotAvailableUserRepository
+      Domain.Model.User.UserRepository <|.. NotAvailableUserRepository
+    }
+  }
+  namespace Service {
+    interface UserAdapter {
+      + toBadges(id)
+    }
+
+    class HttpUserAdapter {
+      - client :GuzzleHttp\Client
+      + __construct(GuzzleHttp\Client)
+      + toBadges(id:string)
+    }
+    UserAdapter <|.. HttpUserAdapter
+
+    class UserTranslator {
+      + toBadgesFromRepresentation(representation)
+    }
+    UserTranslator <- HttpUserAdapter
+
+    class TranslatingUserService {
+      - userAdapter :UserAdapter
+    }
+    Domain.Model.User.UserService <|.. TranslatingUserService
+    TranslatingUserService o- UserAdapter
+  }
+  namespace Ui {
+    namespace Console {
+      namespace Command {
+        class PushNotificationsCommand {
+          + configure()
+          + execute(InputInterface, OutputInterface)
+        }
+        Symfony.Component.Console.Command.Command <|-- PushNotificationsCommand
+      }
+      class Application {
+        - container
+      }
+      Symfony.Component.Console.Application <|-- Application
+    }
+    namespace Twig.Views {
+      object index.twig
+    }
+    namespace Web {
+      namespace Silex {
+        class Application {
+          + {static} bootstrap() :Silex.Application
+        }
+
+        namespace Public {
+          class frontController
+          Infrastructure.Ui.Web.Silex.Application <- frontController
+
+          namespace assets {
+            object app.css
+            object logo.png
+          }
+        }
+      }
+    }
+  }
+}
+
+
+@enduml

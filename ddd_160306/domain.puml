@@ -1,0 +1,163 @@
+@startuml
+
+namespace Domain #fc9 {
+  namespace Event {
+    class LoggerDomainEventSubscriber {
+      + handle(Event)
+      + isSubscribedTo(Event) :bool
+    }
+    Ddd.Domain.DomainEventSubscriber <|.. LoggerDomainEventSubscriber
+  }
+
+  namespace Model {
+    abstract class Authentifier {
+      + __construct(UserRepository)
+      + authenticate(email, password) :bool
+      + {abstract} logout()
+      + {abstract} persistAuthentication(User)
+      + {abstract} isAlreadyAuthenticated :bool
+    }
+    class EmailAddress {
+      + __construct(email:string)
+      + __toString() :string
+    }
+
+    namespace User {
+      class User {
+        + {static} MAX_LENGTH_EMAIL :int =255
+        + {static} MAX_LENGTH_PASSWORD :int =255
+        + {static} MAX_WISHES :int =3
+        # userId :UserId
+        # email :string
+        # password :string
+        # createdOn :DateTime
+        # updatedOn :DateTime
+        # wishes :ArrayCollection
+        + __construct(UserId, email:string, password:string)
+        + setEmail(email:string)
+        + changePassword(password:string)
+        + id() :UserId
+        + email() :string
+        + password() :string
+        + makeWishNoAggregateVersion(WishId, address:string, content:string) :Wish
+        + makeWishAggregateVersion(address:string, content:string)
+        + numberOfRemainingWishes() :int
+        + grantWishes() :int
+        + updateWish(WishId, address:string, content:string)
+        + deleteWish(WishId)
+      }
+      class UserId {
+        - id :string
+        + __construct(id:string)
+        + id() :string
+        + equals(UserId) :bool
+        + __toString() :string
+      }
+      User o- UserId
+      class UserSecurityToken {
+        - userId :UserId
+        - email :string
+        + __construct(UserId, email:string)
+        + id() :UserId
+        + email() :string
+      }
+      class FirstWillMadeBadge
+      interface UserFactory {
+        + build(UserId, email:string, password:string) :User
+      }
+      User <-- UserFactory : <<creates>>
+      interface UserRepository {
+        + ofId(UserId) :User
+        + ofEmail(email:string) :User
+        + add(User)
+        + nextIdentity() :UserId
+      }
+      interface UserService {
+        + badgesFrom(UserId)
+      }
+      class UserRegistered #cfc {
+        - userId :UserId
+        - occurredOn :DateTimeImmutable
+        + __construct(UserId)
+        + userId() :UserId
+      }
+      Ddd.Domain.DomainEvent <|.. UserRegistered
+      Ddd.Domain.Event.PublishableDomainEvent <|.. UserRegistered
+      class LoginAttempted #cfc {
+        - email :string
+        - occurredOn :DateTimeImmutable
+        + __construct(email:string)
+        + email() :string
+      }
+      Ddd.Domain.DomainEvent <|.. LoginAttempted
+      class UserAlreadyExistsException
+      class UserDoesNotExistException
+      class NoMoreWishesAllowedException
+    }
+    namespace Wish {
+      class Wish {
+        # wishId : WishId
+        # userId : UserId
+        # content : string
+        # address : string
+        # createdOn : DateTime
+        # updatedOn : DateTime
+        + __construct(WishId, UserId, address, content)
+        + setContent(content:string)
+        + setAddress(address:string)
+        + id() : WishId
+        + userId() : UserId
+        + address() : string
+        + changeContent(content:string) : self
+        + changeAddress(address:string) : self
+        + content() : string
+        + grant()
+      }
+      class WishId {
+        - id :string
+        + __construct(id:string =null)
+        + id() :string
+        + equals(WishId) :bool
+        + __toString() :string
+      }
+      Wish o- WishId
+      interface WishFactory {
+        makeEmailWish(WishId, UserId, email:string, content:string) : Wish
+      }
+      interface WishRepository {
+        + ofId(WishId) :Wish
+        + ofUserId(UserId) :Wish[]
+        + add(Wish)
+        + remove(Wish)
+        + nextIdentity() :WishId
+      }
+      class WishGranted #cfc {
+        - wishId :WishId
+        - occurredOn :DateTimeImmutable
+        + __construct(WishId)
+        + wishId() : WishId
+      }
+      Ddd.Domain.DomainEvent <|.. WishGranted
+      Ddd.Domain.Event.PublishableDomainEvent <|.. WishGranted
+      class WishWasMade #cfc {
+        - wishId :WishId
+        - userId :UserId
+        - address :string
+        - content :string
+        - occurredOn :DateTimeImmutable
+        + __construct(WishId, UserId, address:string, content:string)
+        + wishId() :WishId
+        + userId() :UserId
+        + address() :string
+        + content() :string
+      }
+      Ddd.Domain.DomainEvent <|.. WishWasMade
+      Ddd.Domain.Event.PublishableDomainEvent <|.. WishWasMade
+      class WishDoesNotExistException
+    }
+  }
+  Domain.Model.User --[hidden]-- Domain.Model.Wish
+}
+
+
+@enduml
