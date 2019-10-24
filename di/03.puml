@@ -1,0 +1,33 @@
+@startuml
+title
+  DI
+endtitle
+
+legend top
+  しかし、誰かが GreatHardware を new して LowLayer に渡さなければならない。
+  そうすると、結局それが GreatHardware に依存してしまう。
+endlegend
+
+interface IHardware {
+  + something()
+}
+class HardwareImpl {
+  + something()
+}
+IHardware <|.. HardwareImpl
+
+class LowLayer {
+  - hardware :IHardware
+  + construct(hardware:IHardware)
+  + doHoge()
+}
+IHardware <- LowLayer : something()
+
+class MiddleLayer {
+  - lowLayer: LowLayer
+  + construct()
+  + doFuga()
+}
+LowLayer <-- MiddleLayer : <<create>>
+HardwareImpl <-- MiddleLayer : <<create>>
+@enduml

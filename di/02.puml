@@ -1,0 +1,26 @@
+@startuml
+title
+  DI
+endtitle
+
+legend top
+  コンストラクタによるDI。
+  IHardware を実装したモックを注入すれば、
+  実際のハードウェアがなくても LowLayer のテストができる。
+endlegend
+
+interface IHardware {
+  + something()
+}
+class HardwareImpl {
+  + something()
+}
+IHardware <|.. HardwareImpl
+
+class LowLayer {
+  - hardware :IHardware
+  + construct(hardware:IHardware)
+  + doHoge()
+}
+IHardware <- LowLayer : something()
+@enduml

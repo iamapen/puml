@@ -1,0 +1,73 @@
+@startuml
+title
+  DI
+endtitle
+
+legend top
+  UIController の生成も Factory にした。
+  全レイヤが分離され、相互依存がない状態。
+  Factory 以外のクラスの依存性は外部から注入でき、モックによるテストができる。
+
+  しかし Factory に問題は残る。
+  たとえば MiddleLayerImpl のコンストラクタ引数が増加したらメンテが大変。
+endlegend
+
+interface IHardware {
+  + something()
+}
+class HardwareImpl {
+  + something()
+}
+IHardware <|.. HardwareImpl
+
+interface ILowLayer {
+  + doHoge()
+}
+class LowLayerImpl {
+  - hardware :IHardware
+  + construct(hardware:IHardware)
+  + doHoge()
+}
+ILowLayer <|.. LowLayerImpl
+IHardware <- LowLayerImpl : something()
+
+interface IMiddleLayer {
+  + doFuga()
+}
+class MiddleLayerImpl {
+  - lowLayer: ILowLayer
+  + construct(lowLayer:ILowLayer)
+  + doFuga()
+}
+IMiddleLayer <|.. MiddleLayerImpl
+ILowLayer <- MiddleLayerImpl : doHoge()
+
+interface IHighLayer {
+  + doFoo()
+}
+class HighLayerImpl {
+  - middleLayer :IMiddleLayer
+  + construct(middleLayer:IMiddleLayer)
+  + doFoo()
+}
+IHighLayer <|.. HighLayerImpl
+IMiddleLayer <- HighLayerImpl : doFoo()
+
+class UIController {
+  - highLayer: IHighLayer
+  + construct(highLayer:IHighLayer)
+}
+
+HighLayerImpl <-- UIController : doFoo()
+
+
+class Factory {
+  + {static} createUiController()
+}
+UIController <-- Factory : <<create>>
+HighLayerImpl <-- Factory : <<create>>
+MiddleLayerImpl <-- Factory : <<create>>
+LowLayerImpl <-- Factory : <<create>>
+HardwareImpl <-- Factory : <<create>>
+
+@enduml

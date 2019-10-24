@@ -1,0 +1,68 @@
+@startuml
+title
+  DI
+endtitle
+
+legend top
+  インスタンス生成に Factory を導入。
+  よくなった。
+endlegend
+
+interface IHardware {
+  + something()
+}
+class HardwareImpl {
+  + something()
+}
+IHardware <|.. HardwareImpl
+
+interface ILowLayer {
+  + doHoge()
+}
+class LowLayerImpl {
+  - hardware :IHardware
+  + construct(hardware:IHardware)
+  + doHoge()
+}
+ILowLayer <|.. LowLayerImpl
+IHardware <- LowLayerImpl : something()
+
+interface IMiddleLayer {
+  + doFuga()
+}
+class MiddleLayerImpl {
+  - lowLayer: ILowLayer
+  + construct(lowLayer:ILowLayer)
+  + doFuga()
+}
+IMiddleLayer <|.. MiddleLayerImpl
+ILowLayer <- MiddleLayerImpl : doHoge()
+
+interface IHighLayer {
+  + doFoo()
+}
+class HighLayerImpl {
+  - middleLayer :IMiddleLayer
+  + construct(middleLayer:IMiddleLayer)
+  + doFoo()
+}
+IHighLayer <|.. HighLayerImpl
+IMiddleLayer <- HighLayerImpl : doFoo()
+
+class UIController {
+  - highLayer: IHighLayer
+  + construct()
+}
+
+HighLayerImpl <-- UIController : doFoo()
+Factory <- UIController : createHighLayer()
+
+class Factory {
+  + {static} createHighLayer()
+}
+HighLayerImpl <-- Factory : <<create>>
+MiddleLayerImpl <-- Factory : <<create>>
+LowLayerImpl <-- Factory : <<create>>
+HardwareImpl <-- Factory : <<create>>
+
+@enduml

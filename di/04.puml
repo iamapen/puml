@@ -1,0 +1,65 @@
+@startuml
+title
+  DI
+endtitle
+
+legend top
+  さらに上のレイヤにその責任を持たせた場合。
+  やはりUIレイヤに具体的なハードウェアがないと動かなくなってしまった。
+  01 よりも悪い状態になった。
+endlegend
+
+interface IHardware {
+  + something()
+}
+class HardwareImpl {
+  + something()
+}
+IHardware <|.. HardwareImpl
+
+interface ILowLayer {
+  + doHoge()
+}
+class LowLayerImpl {
+  - hardware :IHardware
+  + construct(hardware:IHardware)
+  + doHoge()
+}
+ILowLayer <|.. LowLayerImpl
+IHardware <- LowLayerImpl : something()
+
+interface IMiddleLayer {
+  + doFuga()
+}
+class MiddleLayerImpl {
+  - lowLayer: ILowLayer
+  + construct(lowLayer:ILowLayer)
+  + doFuga()
+}
+IMiddleLayer <|.. MiddleLayerImpl
+ILowLayer <- MiddleLayerImpl : doHoge()
+
+interface IHighLayer {
+  + doFoo()
+}
+class HighLayerImpl {
+  - middleLayer :IMiddleLayer
+  + construct(middleLayer:IMiddleLayer)
+  + doFoo()
+}
+IHighLayer <|.. HighLayerImpl
+IMiddleLayer <- HighLayerImpl : doFoo()
+
+class UIController {
+  - highLayer: IHighLayer
+  + construct()
+}
+
+HighLayerImpl <-- UIController : <<create>>
+MiddleLayerImpl <-- UIController : <<create>>
+LowLayerImpl <-- UIController : <<create>>
+HardwareImpl <-- UIController : <<create>>
+
+HighLayerImpl <-- UIController : doFoo()
+
+@enduml

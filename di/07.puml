@@ -1,0 +1,72 @@
+@startuml
+title
+  DI
+endtitle
+
+legend top
+  new をDIコンテナに任せる。
+endlegend
+
+interface IHardware {
+  + something()
+}
+class HardwareImpl {
+  + something()
+}
+IHardware <|.. HardwareImpl
+
+interface ILowLayer {
+  + doHoge()
+}
+class LowLayerImpl {
+  - hardware :IHardware
+  + construct(hardware:IHardware)
+  + doHoge()
+}
+ILowLayer <|.. LowLayerImpl
+IHardware <- LowLayerImpl : something()
+
+interface IMiddleLayer {
+  + doFuga()
+}
+class MiddleLayerImpl {
+  - lowLayer: ILowLayer
+  + construct(lowLayer:ILowLayer)
+  + doFuga()
+}
+IMiddleLayer <|.. MiddleLayerImpl
+ILowLayer <- MiddleLayerImpl : doHoge()
+
+interface IHighLayer {
+  + doFoo()
+}
+class HighLayerImpl {
+  - middleLayer :IMiddleLayer
+  + construct(middleLayer:IMiddleLayer)
+  + doFoo()
+}
+IHighLayer <|.. HighLayerImpl
+IMiddleLayer <- HighLayerImpl : doFoo()
+
+class UIController {
+  - highLayer: IHighLayer
+  + construct(highLayer:IHighLayer)
+}
+
+HighLayerImpl <-- UIController : doFoo()
+
+
+object DiContainer {
+  IHighLayer = HighLayerImpl
+  IMiddleLayer = MiddleLayerImpl
+  ILowLayer = LowLayerImpl
+  IHardware = HardwareImpl
+}
+HighLayerImpl <-- DiContainer : <<create>>
+MiddleLayerImpl <-- DiContainer : <<create>>
+LowLayerImpl <-- DiContainer : <<create>>
+HardwareImpl <-- DiContainer : <<create>>
+note bottom of DiContainer
+  Interface に対するインスタンスを定義
+endnote
+@enduml

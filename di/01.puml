@@ -1,0 +1,23 @@
+@startuml
+title
+  DI
+endtitle
+
+legend top
+  コンストラクタ内で Hardware インスタンスを直接作っている。
+  実際のハードウェアがないとテストできない状態。
+endlegend
+
+class Hardware {
+  + something()
+}
+
+class LowLayer {
+  - hardware :Hardware
+  + construct()
+  + doHoge()
+}
+
+Hardware <- LowLayer : <<create>>
+Hardware <- LowLayer : something()
+@enduml
