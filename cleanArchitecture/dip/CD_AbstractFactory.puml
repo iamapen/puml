@@ -1,0 +1,41 @@
+@startuml
+title DIP(依存性逆転の原則)
+legend top
+  ソースコードの依存性と、処理の流れが逆向きになる。
+  「依存性逆転」という呼び名はここから来ている...らしい。
+
+  私はいまいち命名はピンと来ないが。
+  疎結合になる理由はわかる。
+endlegend
+
+class Application
+
+package アーキテクチャ境界1 {
+  interface ServiceFactory {
+    + createService() :Service
+  }
+  interface Service
+  Service <-- ServiceFactory :<<creates>>
+}
+Application --> ServiceFactory
+Application -> Service
+
+package アーキテクチャ境界2 {
+  class ServiceFactoryImpl {
+    + createService() :Service
+  }
+  ServiceFactory <|.. ServiceFactoryImpl
+
+  class ConcreteImpl
+  Service <|.. ConcreteImpl
+  ConcreteImpl <-- ServiceFactoryImpl :<<creates>>
+}
+
+object main
+note bottom
+  ServiceLocator や DiContainer の初期化など
+  アプリはここ経由でFactoryにアクセスする
+endnote
+ServiceFactoryImpl <--o main :<<creates>>
+
+@enduml
