@@ -1,0 +1,32 @@
+@startuml
+legend top
+  コンポネントの関係は単方向である
+
+  ビジネスロジックを含んでいる Interactor が、最上位レベルの概念となり、
+  最も保護されるべきコンポネントとなる。
+
+  上位コンポネントは、下位コンポネントの変更影響を受けてはいけない。
+endlegend
+
+[FinancialReportController]
+
+package Presenter {
+  [ScreenPresenter]
+  [PrintPresenter]
+  FinancialReportController <-- ScreenPresenter
+  FinancialReportController <-- PrintPresenter
+}
+
+package View {
+  [WebView]
+  [PdfView]
+  ScreenPresenter <-- WebView
+  ScreenPresenter <-- PdfView
+}
+
+[FinancialReportInteractor] #fcc
+FinancialReportController -> FinancialReportInteractor
+
+[FinancialDatabase]
+FinancialReportInteractor <-- FinancialDatabase
+@enduml

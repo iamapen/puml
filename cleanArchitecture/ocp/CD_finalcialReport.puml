@@ -1,0 +1,75 @@
+@startuml
+title 財務情報画面
+legend top
+
+endlegend
+
+package Controller {
+  class FinancialReportController
+  interface FinancialReportPresenter
+  note left: DIP
+  FinancialReportController --> FinancialReportPresenter
+}
+
+package Presenter {
+  class ScreenPresenter
+  class ScreenViewModel <<DTO>>
+  interface IScreenView
+  note right: DIP
+  ScreenPresenter --> ScreenViewModel :<<creates>>
+  ScreenPresenter --> IScreenView
+  ScreenViewModel <-- IScreenView
+
+  class PrintPresenter
+  class PrintViewModel <<DTO>>
+  interface IPrintView
+  note right: DIP
+  PrintPresenter --> PrintViewModel :<<creates>>
+  PrintPresenter --> IPrintView
+  PrintViewModel <-- IPrintView
+}
+FinancialReportPresenter <|... ScreenPresenter
+FinancialReportPresenter <|... PrintPresenter
+
+package View {
+  class WebView
+  IScreenView <|.. WebView
+
+  class PdfView
+  IPrintView <|.. PdfView
+}
+
+package Interactor {
+  class FinancialReportRequest <<DTO>>
+  interface FinancialFinancialReportRequester
+  note right
+    ISP, CRP。推移的依存の回避。
+    Interactor の中身を知りすぎないように。
+  endnote
+  class FinalcialReportResult <<DTO>>
+  class FinancialReportGenerator
+  interface FinancialDataGateway
+  note right: DIP
+  class SomeEntities
+}
+FinancialReportRequest <-- FinancialReportGenerator
+FinancialFinancialReportRequester <|.. FinancialReportGenerator
+FinalcialReportResult <-- FinancialReportGenerator :<<creates>>
+FinancialReportGenerator --> FinancialDataGateway
+FinancialReportGenerator -> SomeEntities
+
+FinancialReportController -> FinancialReportRequest
+FinancialReportController -> FinancialFinancialReportRequester
+FinancialReportPresenter -> FinalcialReportResult
+
+
+package Database {
+  class FinancialDataMapper
+  class SomeDAOs
+  FinancialDataMapper -> SomeDAOs
+}
+FinancialDataGateway <|.. FinancialDataMapper
+
+
+
+@enduml
